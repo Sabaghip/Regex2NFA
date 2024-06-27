@@ -44,6 +44,39 @@ def createNFA(reg):
   
   print("ebaratha: ", ebaratha)
 
-createNFA("(a+b)*c*+(bc*)*a+b")
-# nfa = createNFA("a*+b*")
+###############################################################################
+  allStates = []
+  i=0
+  initialState = State("init")
+  acceptState = State("accept")
+  nfa = NFA(initialState, acceptState)
+  allStates.append(initialState)
+  currentState = initialState
+  while i < len(ebaratha):
+    if(ebaratha[i] == '+'):
+      currentState.addEdge(('.', acceptState))
+      tempState = State(currentState.label + '+')
+      allStates.append(tempState)
+      initialState.addEdge(('.', tempState))
+      nextState = tempState
+    else:
+      nextState = State(ebaratha[i])
+      allStates.append(nextState)
+      if(ebaratha[i][-1] == '*'):
+        currentState.addEdge(('.', nextState))
+        currentState.addEdge((ebaratha[i][0], currentState))
+      else:
+        currentState.addEdge((ebaratha[i][0], nextState))
+
+    currentState = nextState
+    i+=1
+
+  currentState.addEdge(('.', acceptState))
+  allStates.append(acceptState)
+  for i in allStates:
+    print("\n\nname : ", i.label, " edges : ", [(j[0], j[1].label) for j in i.edges])
+  return nfa
+
+# print(createNFA("(a+b)*c*+(bc*)*a+b"))
+nfa = createNFA("a*+b*")
 
