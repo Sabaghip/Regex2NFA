@@ -73,10 +73,44 @@ def createNFA(reg):
 
   currentState.addEdge(('.', acceptState))
   allStates.append(acceptState)
-  for i in allStates:
-    print("\n\nname : ", i.label, " edges : ", [(j[0], j[1].label) for j in i.edges])
+  # for i in allStates:
+    # print("\n\nname : ", i.label, " edges : ", [(j[0], j[1].label) for j in i.edges])
   return nfa
+
+###############################################################################
+
+
+def check(nfa:NFA, text):
+  initialState = nfa.initial
+  currentStates = [initialState, ]
+  for k in initialState.edges:
+    if k[0] == '.':
+      if(k[1] not in currentStates):
+        currentStates.append(k[1])
+  nextStates = []
+  for i in text:
+    nextStates = []
+    for j in currentStates:
+      for k in j.edges:
+        if k[0] == i:
+          if(k[1] not in nextStates):
+            nextStates.append(k[1])
+
+      for m in nextStates:
+        for k in m.edges:
+          if k[0]=='.':
+            if(k[1] not in nextStates):
+              nextStates.append(k[1])
+    currentStates = nextStates
+  for j in nextStates:
+    if(j == nfa.accept):
+      return True
+  return False
 
 # print(createNFA("(a+b)*c*+(bc*)*a+b"))
 nfa = createNFA("a*+b*")
 
+print(check(nfa,"abab")) #False
+print(check(nfa,"aab")) #True
+print(check(nfa,"b")) #True
+print(check(nfa,"baa")) #False
