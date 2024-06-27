@@ -95,35 +95,56 @@ def createNFA(reg):
 
 ###############################################################################
   allStates = []
-  i=0
   initialState = State("init")
   acceptState = State("accept")
   nfa = NFA(initialState, acceptState)
+  queue = [(ebaratha, initialState, acceptState), ]
   allStates.append(initialState)
-  currentState = initialState
-  while i < len(ebaratha):
-    if(ebaratha[i] == '+'):
-      currentState.addEdge(('.', acceptState))
-      tempState = State(currentState.label + '+')
-      allStates.append(tempState)
-      initialState.addEdge(('.', tempState))
-      nextState = tempState
-    else:
-      nextState = State(ebaratha[i])
-      allStates.append(nextState)
-      if(ebaratha[i][-1] == '*'):
-        currentState.addEdge(('.', nextState))
-        currentState.addEdge((ebaratha[i][0], currentState))
+  while(len(queue) > 0):
+    z= queue[0]
+    queue.pop(0)
+    initialState = z[1]
+    acceptState = z[2]
+    currentState = initialState
+    i=0
+    while i < len(z[0]):
+      if isinstance(z[0][i], str):
+        print(z[0][i])
+        if(z[0][i] == '+'):
+          currentState.addEdge(('.', acceptState))
+          tempState = State(currentState.label + '+')
+          allStates.append(tempState)
+          initialState.addEdge(('.', tempState))
+          nextState = tempState
+        else:
+          nextState = State(z[0][i])
+          allStates.append(nextState)
+          if(z[0][i][-1] == '*'):
+            currentState.addEdge(('.', nextState))
+            currentState.addEdge((z[0][i][0], currentState))
+          else:
+            currentState.addEdge((z[0][i][0], nextState))
+        currentState = nextState
+        i+=1
       else:
-        currentState.addEdge((ebaratha[i][0], nextState))
+        startState = State("parantez start")
+        finishState = State("parantez end")
+        allStates.append(finishState)
+        allStates.append(startState)
+        currentState.addEdge(('.', startState))
+        if(z[0][i][-1] == '*'):
+          startState.addEdge(('.', finishState))
+          finishState.addEdge(('.', startState))
+          z[0][i].pop(-1)
+        print(z[0][i])
+        queue.append((z[0][i], startState, finishState))
+        i+=1
+        currentState = finishState
 
-    currentState = nextState
-    i+=1
-
-  currentState.addEdge(('.', acceptState))
-  allStates.append(acceptState)
-  # for i in allStates:
-    # print("\n\nname : ", i.label, " edges : ", [(j[0], j[1].label) for j in i.edges])
+    currentState.addEdge(('.', acceptState))
+    allStates.append(acceptState)
+  for i in allStates:
+    print("\n\nname : ", i.label, " edges : ", [(j[0], j[1].label) for j in i.edges])
   return nfa
 
 ###############################################################################
@@ -132,10 +153,11 @@ def createNFA(reg):
 def check(nfa:NFA, text):
   initialState = nfa.initial
   currentStates = [initialState, ]
-  for k in initialState.edges:
-    if k[0] == '.':
-      if(k[1] not in currentStates):
-        currentStates.append(k[1])
+  for z in currentStates:
+    for k in z.edges:
+      if k[0] == '.':
+        if(k[1] not in currentStates):
+          currentStates.append(k[1])
   nextStates = []
   for i in text:
     nextStates = []
@@ -156,10 +178,10 @@ def check(nfa:NFA, text):
       return True
   return False
 
-# print(createNFA("(a+b)*c*+(bc*)*a+b"))
-nfa = createNFA("(a+b)*a+(b*+a)+a")
+nfa = createNFA("bc*(ab)*aab*")
+# nfa = createNFA("(a+b)*a")
 
 print(check(nfa,"abab")) #False
-print(check(nfa,"aab")) #True
-print(check(nfa,"b")) #True
-print(check(nfa,"baa")) #False
+print(check(nfa,"aab")) #False
+print(check(nfa,"baa")) #True
+print(check(nfa,"bcccababaa")) #True
