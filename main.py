@@ -28,9 +28,11 @@ def createNFA(reg):
         if(reg[i] == '('):
           flag += 1
       i+=1
-      if reg[i] == '*':
+      if i < len(reg) and reg[i] == '*':
         ebarat.append(reg[i])
       ebaratha.append(''.join(ebarat))
+      if i < len(reg) and reg[i] != '*':
+        ebaratha.append(reg[i])
       i+=1
       continue
 
@@ -42,6 +44,53 @@ def createNFA(reg):
     ebaratha.append(reg[i])
     i+=1
   
+  queue = [ebaratha, ]
+  while len(queue)>0:
+    z= queue[0]
+    queue.pop(0)
+    i=0
+    while i < len(z):
+      if z[i][0] == '(':
+        res = []
+        #TODO
+        j=0
+        x = z[i][1:]
+        while j < len(x):
+          ebarat = []
+          if x[j] == ')':
+            j+=1
+            continue
+    
+          if x[j] == '(':
+            flag = 1
+            ebarat.append(x[j])
+            while flag != 0:
+              j+=1
+              ebarat.append(x[j])
+              if(x[j] == ')'):
+                flag -= 1
+              if(x[j] == '('):
+                flag += 1
+            j+=1
+            if j < len(x) and x[j] == '*':
+              ebarat.append(x[j])
+            res.append(''.join(ebarat))
+            j+=1
+            continue
+        
+          if j + 1 < len(x) and x[j+1]=='*':
+            res.append(''.join([x[j], '*']))
+            j+=2
+            continue
+        
+          res.append(x[j])
+          j+=1
+
+        z[i] = res
+        queue.append(z[i])
+      
+      i+=1
+
   print("ebaratha: ", ebaratha)
 
 ###############################################################################
@@ -108,7 +157,7 @@ def check(nfa:NFA, text):
   return False
 
 # print(createNFA("(a+b)*c*+(bc*)*a+b"))
-nfa = createNFA("a*+b*")
+nfa = createNFA("(a+b)*a+(b*+a)+a")
 
 print(check(nfa,"abab")) #False
 print(check(nfa,"aab")) #True
