@@ -1,6 +1,106 @@
-def CFG2CNF(automata):
+#function for convert context-free grammer to chaomwski normal form
+def CFG2CNF(automata = {
+     'terminals': [],
+     'non_terminals': [],
+     'start': '',
+     'productions': {
+     }
+    }):
+    # phase1: remove RHS start_state
+    flag = False
+    for head in automata['productions']:
+       for bodies in automata['productions'][head]:
+          for body in bodies:
+              if body == automata['start']:
+                automata['productions']['S0S0'] = [automata['start']]
+                automata['start'] = 'S0S0'
+                automata['non_terminals'].append("S0S0")
+                flag = True
+                break
+          if flag:
+             break
+       if flag:
+          break
+       
+    # phase2: remove null
+
+    flag = True
+    while flag:
+        flag = False
+        for head in automata['productions']:
+           for body in automata['productions'][head]:
+                  if body == '':
+                    flag = True
+                    automata['productions'][head].remove('')
+                    for head2 in automata['productions']:
+                       for body2 in automata['productions'][head2]:
+                          letterIndex = 0
+                          while letterIndex < len(body2):
+                            if body2[letterIndex] == head:
+                               if body2[0:letterIndex] + body2[letterIndex +1:] not in automata['productions'][head2] and len(body2) > 1:
+                                    automata['productions'][head2].append(body2[0:letterIndex] + body2[letterIndex +1:])
+                            letterIndex +=1
+
+    # phase3: remove unit
+    flag = True
+    while flag:
+        flag = False
+        for head in automata['productions']:
+           for body in automata['productions'][head]:
+                  if len(body) == 1 and body[0] not in automata['terminals']:
+                    flag = True
+                    automata['productions'][head].remove(body)
+                    if(head != body[0]):
+                        for body2 in automata['productions'][body[0]]:
+                            automata['productions'][head].append(body2)
+    
+    i=1
+    #phase4: format
+    flag = True
+    while flag:
+        flag = False
+        heads = []
+        for u in automata['productions']:
+           heads.append(u)
+        for head in heads:
+           for body in automata['productions'][head]:
+                  if len(body) > 1:
+                    for letterIndex in range(len(body)):
+                       if body[letterIndex] in automata['terminals']:
+                          if len(body[letterIndex + 1:]) > 0:
+                            automata['productions']['X' + str(i)] = [ [r for r in body[:letterIndex + 1]]]
+                            i+=1
+                            automata['productions']['X' + str(i)] = [ [r for r in body[letterIndex + 1:]]]
+                            i+=1
+                            automata['productions'][head].append(['X' + str(i - 2), 'X' + str(i - 1)])
+                            automata['productions'][head].remove(body)
+                            flag = True
+                            break
+                          else:
+                             automata['productions']['X' + str(i)] = [ [r for r in body[:letterIndex]]]
+                             i+=1
+                             automata['productions']['X' + str(i)] = [ [r for r in body[letterIndex:]]]
+                             i+=1
+                             automata['productions'][head].append(['X' + str(i - 2), 'X' + str(i - 1)])
+                             automata['productions'][head].remove(body)
+                             flag = True
+                             break
+
+        for head in heads:
+           for body in automata['productions'][head]:
+                  if len(body) > 2:
+                        automata['productions']['X' + str(i)] = [ [r for r in body[:len(body)//2]]]
+                        i+=1
+                        automata['productions']['X' + str(i)] = [ [r for r in body[len(body)//2:]]]
+                        i+=1
+                        automata['productions'][head].append(['X' + str(i - 2), 'X' + str(i - 1)])
+                        automata['productions'][head].remove(body)
+                        flag = True
+                        break         
+
     return automata
 
+#function for convert chaomwski normal form to greybakh normal form
 def CNF2GNF(automata):
     newCfg = {
      'terminals': automata['terminals'],
@@ -9,8 +109,8 @@ def CNF2GNF(automata):
      'productions': {
      }
     }
-
-    #phase1
+    
+    #phase1: Change vars names
     temp = {}
     i = 1
     for head in automata['productions']:
@@ -39,8 +139,7 @@ def CNF2GNF(automata):
                 newBody.append(letter)
           newCfg['productions'][temp[head]].append(newBody)
     
-
-    #phase2
+    #phase2: check Am>An
     flag = True
     while flag:
         flag = False
@@ -52,7 +151,8 @@ def CNF2GNF(automata):
               if len(body)>0 and len(body[0])>0 and body[0][0] == 'A' and head[0] == 'A':
                  if int(head.split('A')[1]) > int(body[0].split('A')[1]):
                     for q in newCfg['productions'][body[0]]:
-                       newCfg['productions'][head].append(q + body[1:])
+                       if(q + body[1:] not in newCfg['productions'][head]):
+                          newCfg['productions'][head].append(q + body[1:])
                     newCfg['productions'][head].remove(body)
                     flag=True
                  elif int(head.split('A')[1]) == int(body[0].split('A')[1]):
@@ -61,8 +161,10 @@ def CNF2GNF(automata):
                     newCfg['productions']['Z'+str(i)].append(body[1:])
                     newCfg['productions']['Z'+str(i)].append(body[1:] + ['Z'+str(i)])
                     newCfg['productions'][head].remove(body)
-                    for q in range(len(newCfg['productions'][head])):
-                       newCfg['productions'][head].append(newCfg['productions'][head][q] + ['Z'+str(i)])
+                    zzz = len(newCfg['productions'][head])
+                    for q in range(zzz):
+                       if(newCfg['productions'][head][q] + ['Z'+str(i)] not in newCfg['productions'][head]):
+                          newCfg['productions'][head].append(newCfg['productions'][head][q] + ['Z'+str(i)])
                     i+=1
                     flag=True
 
@@ -74,24 +176,16 @@ def CNF2GNF(automata):
         for u in newCfg['productions']:
            heads.append(u)
         for head in heads:
-           print("head : ", head)
            for body in newCfg['productions'][head]:
-              print("body : ", body)
               if len(body)>0 and body[0] not in newCfg['terminals']:
-                print(newCfg['productions'][body[0]])
                 for q in range(len(newCfg['productions'][body[0]])):
-                    print(newCfg['productions'][body[0]][q] + body[1:])
                     newCfg['productions'][head].append(newCfg['productions'][body[0]][q] + body[1:])
                 newCfg['productions'][head].remove(body)
                 flag = True
-                
-             
-    print(newCfg)
 
     return newCfg
 
-
-
+# class for save configs and models
 class NPDA:
     def __init__(self, cfg):
         self.cfg = cfg
@@ -163,22 +257,20 @@ class NPDA:
     def _changeStack(self, stack, states, newStates):
         return stack[ : len(stack) - len(states)] + [i for i in newStates[::-1]]
     
-# Define the CFG
+# configs of context free grammer
 cfg = {
     'terminals': ['a', 'b'],
-    'non_terminals': ['S', 'B'],
+    'non_terminals': ['S'],
     'start': 'S',
     'productions': {
-        'S': ['XA', 'BB'],
-        'B': ['b', 'SB'],
-        'X': ['b'],
-        'A': ['a']
+        'S': [['a','S','b'], ['a','b']],
     }
 }
 
-# Convert CFG to NPDA
+# convert cfg to npda
 npda = NPDA(cfg)
 
+#show resukt for a^nb^n
 print("NPDA States:")
 print(npda.automata['states'])
 print("\nNPDA Transitions:")
@@ -187,4 +279,4 @@ for t in npda.automata['transitions']:
 print("\nStart State:", npda.automata['start_state'])
 print("Accept State:", npda.automata['accept_state'])
 print("Stack Start Symbol:", npda.automata['stack_start_symbol'])
-print(npda.check("ba"))
+print(npda.check("ab"))
