@@ -32,7 +32,7 @@ def createNFA(reg):
         ebarat.append(reg[i])
       ebaratha.append(''.join(ebarat))
       if i < len(reg) and reg[i] != '*':
-        ebaratha.append(reg[i])
+        continue
       i+=1
       continue
 

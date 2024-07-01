@@ -6,7 +6,7 @@ def CFG2CNF(automata = {
      'productions': {
      }
     }):
-    # phase1: remove RHS start_state
+    # phase1: remove right hand side start_state
     flag = False
     for head in automata['productions']:
        for bodies in automata['productions'][head]:
@@ -110,7 +110,7 @@ def CNF2GNF(automata):
      }
     }
     
-    #phase1: Change vars names
+    #phase1: change vars names
     temp = {}
     i = 1
     for head in automata['productions']:
@@ -168,7 +168,7 @@ def CNF2GNF(automata):
                     i+=1
                     flag=True
 
-    #phase3
+    #phase3 change format
     flag = True
     while flag:
         flag = False
